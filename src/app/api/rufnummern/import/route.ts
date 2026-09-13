@@ -32,6 +32,9 @@ function findeHeaderZeile(sheet: ExcelJS.Worksheet) {
     });
 
     if (rufCol) {
+      // Manche Tabellenblätter (z.B. H3G) beschriften die Namensspalte gar
+      // nicht - dort steht der Name einfach direkt neben Rufnummer/KDNr.
+      if (!nameCol) nameCol = banCol ? banCol + 1 : rufCol + 1;
       return { headerRow: rowNumber, rufCol, nameCol, banCol };
     }
   }
