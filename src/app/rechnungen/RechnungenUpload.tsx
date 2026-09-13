@@ -12,13 +12,17 @@ const ANBIETER_FARBEN: Record<string, string> = {
 export function RechnungenUpload() {
   const router = useRouter();
   const [status, setStatus] = useState<string | null>(null);
+  const [selectedFileNames, setSelectedFileNames] = useState<string[]>([]);
   const [isUploading, startUpload] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleUpload(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const files = fileInputRef.current?.files;
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0) {
+      setStatus("Bitte zuerst eine oder mehrere PDF-Dateien auswählen.");
+      return;
+    }
 
     startUpload(async () => {
       for (const file of Array.from(files)) {
@@ -39,6 +43,7 @@ export function RechnungenUpload() {
         );
       }
       if (fileInputRef.current) fileInputRef.current.value = "";
+      setSelectedFileNames([]);
       router.refresh();
     });
   }
@@ -53,8 +58,23 @@ export function RechnungenUpload() {
         type="file"
         accept=".pdf"
         multiple
-        className="text-sm"
+        className="hidden"
+        onChange={(e) =>
+          setSelectedFileNames(Array.from(e.target.files ?? []).map((f) => f.name))
+        }
       />
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100"
+      >
+        Datei(en) auswählen
+      </button>
+      <span className="text-sm text-zinc-500">
+        {selectedFileNames.length > 0
+          ? selectedFileNames.join(", ")
+          : "Keine Datei ausgewählt"}
+      </span>
       <button
         type="submit"
         disabled={isUploading}

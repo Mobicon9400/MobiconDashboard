@@ -26,12 +26,16 @@ export function RufnummernTable({ initialRows }: { initialRows: Rufnummer[] }) {
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const [isUploading, startUpload] = useTransition();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleUpload(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const file = fileInputRef.current?.files?.[0];
-    if (!file) return;
+    if (!file) {
+      setUploadStatus("Bitte zuerst eine Excel-Datei auswählen.");
+      return;
+    }
 
     const formData = new FormData();
     formData.append("datei", file);
@@ -51,6 +55,7 @@ export function RufnummernTable({ initialRows }: { initialRows: Rufnummer[] }) {
         `${data.importiert} Rufnummern importiert (${data.verarbeiteteSheets.join(", ")}).`,
       );
       if (fileInputRef.current) fileInputRef.current.value = "";
+      setSelectedFileName(null);
       router.refresh();
     });
   }
@@ -104,13 +109,24 @@ export function RufnummernTable({ initialRows }: { initialRows: Rufnummer[] }) {
   return (
     <div className="mt-8 flex flex-col gap-6">
       <div className="flex flex-wrap items-center gap-3 rounded-xl border border-zinc-200 bg-white p-4">
-        <form onSubmit={handleUpload} className="flex items-center gap-3">
+        <form onSubmit={handleUpload} className="flex flex-wrap items-center gap-3">
           <input
             ref={fileInputRef}
             type="file"
             accept=".xlsx"
-            className="text-sm"
+            className="hidden"
+            onChange={(e) => setSelectedFileName(e.target.files?.[0]?.name ?? null)}
           />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100"
+          >
+            Datei auswählen
+          </button>
+          <span className="text-sm text-zinc-500">
+            {selectedFileName ?? "Keine Datei ausgewählt"}
+          </span>
           <button
             type="submit"
             disabled={isUploading}
