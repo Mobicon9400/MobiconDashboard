@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const AUTH_COOKIE = "mobicon_auth";
+const PUBLIC_ASSET_EXTENSIONS = /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/;
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -10,7 +11,7 @@ export function proxy(request: NextRequest) {
     pathname.startsWith("/login") ||
     pathname.startsWith("/api/login") ||
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon")
+    PUBLIC_ASSET_EXTENSIONS.test(pathname)
   ) {
     return NextResponse.next();
   }
@@ -26,5 +27,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!_next/static|_next/image).*)"],
 };

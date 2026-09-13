@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 export function MobiconLogo({
   className,
   variant = "compact",
@@ -9,12 +7,10 @@ export function MobiconLogo({
 }) {
   if (variant === "full") {
     return (
-      <Image
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
         src="/mobicon-logo.png"
         alt="mobicon – Computer & Kommunikation"
-        width={1029}
-        height={558}
-        priority
         className={`h-auto w-56 ${className ?? ""}`}
       />
     );
@@ -22,13 +18,8 @@ export function MobiconLogo({
 
   return (
     <div className={`flex items-center gap-2.5 ${className ?? ""}`}>
-      <Image
-        src="/mobicon-icon.png"
-        alt=""
-        width={522}
-        height={430}
-        className="h-9 w-auto"
-      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/mobicon-icon.png" alt="" className="h-9 w-auto" />
       <div className="leading-tight">
         <div className="text-2xl font-semibold tracking-tight text-mobicon-dark">
           mobicon
