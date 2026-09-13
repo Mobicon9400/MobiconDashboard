@@ -2,6 +2,10 @@
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app), wired up to Supabase.
 
+## Development Workflow
+
+Work happens on feature branches; `main` reflects the current released state. Merge to `main` only once a change has been reviewed and approved.
+
 ## Getting Started
 
 First, run the development server:
