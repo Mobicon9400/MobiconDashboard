@@ -14,7 +14,8 @@ const UEBERSICHT_HEADER = /^(Ü|U)bersicht f(ü|u)r\s+(\d{6,13})\b/;
 const DETAILUEBERSICHT_HEADER = /^Detail(ü|u)bersicht Nutzungsentgelte f(ü|u)r\s+(\d{6,13})/;
 const TRAILING_NETTO_TAX_BRUTTO =
   /(-?\d[\d.]*,\d{2})\s*(?:(\d{1,2})\s?%\s*)?(-?\d[\d.]*,\d{2})\s*$/;
-const RECHNUNG_HEADER_VALUES = /^\d{7,12}\s+(\d+)\s+(\d{1,2}\.\s*[A-ZÄÖÜ][a-zäöü]{2,4}\.?\s*\d{4})$/;
+const RECHNUNG_HEADER_VALUES =
+  /^(\d{7,12})\s+(\d+)\s+(\d{1,2}\.\s*[A-ZÄÖÜ][a-zäöü]{2,4}\.?\s*\d{4})$/;
 
 type Section = "main" | "nichtInkludiert" | null;
 
@@ -29,13 +30,15 @@ function lineItemName(line: string): string {
 export function parseDrei(pages: PdfLine[][]): ParsedInvoice {
   const lines = pagesToLineStrings(pages);
 
+  let kundennummer: string | null = null;
   let rechnungsnummer: string | null = null;
   let rechnungsdatum: string | null = null;
   for (const line of lines) {
     const match = line.match(RECHNUNG_HEADER_VALUES);
     if (match) {
-      rechnungsnummer = match[1];
-      rechnungsdatum = parseGermanShortDate(match[2]);
+      kundennummer = match[1];
+      rechnungsnummer = match[2];
+      rechnungsdatum = parseGermanShortDate(match[3]);
       break;
     }
   }
@@ -133,6 +136,7 @@ export function parseDrei(pages: PdfLine[][]): ParsedInvoice {
     anbieter: "Drei",
     rechnungsnummer,
     rechnungsdatum,
+    kundennummer,
     positionen: Array.from(positionen.values()),
   };
 }

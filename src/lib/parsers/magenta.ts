@@ -49,6 +49,9 @@ export function parseMagenta(pages: PdfLine[][]): ParsedInvoice {
   const rechnungsdatumMatch = lines
     .map((l) => l.match(/Rechnungsdatum\s+(\d{1,2}\.\d{1,2}\.\d{4})/))
     .find(Boolean);
+  const kundennummerMatch = lines
+    .map((l) => l.match(/Kundennummer\s+([\d.]+)/))
+    .find(Boolean);
 
   const positionen = new Map<string, ParsedPosition>();
 
@@ -137,6 +140,7 @@ export function parseMagenta(pages: PdfLine[][]): ParsedInvoice {
     rechnungsdatum: rechnungsdatumMatch
       ? parseGermanDate(rechnungsdatumMatch[1])
       : null,
+    kundennummer: kundennummerMatch ? kundennummerMatch[1] : null,
     positionen: Array.from(positionen.values()),
   };
 }

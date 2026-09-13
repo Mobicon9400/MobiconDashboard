@@ -43,6 +43,9 @@ export function parseA1(pages: PdfLine[][]): ParsedInvoice {
   const abrechnungszeitraumMatch = lines
     .map((l) => l.match(/Abrechnungszeitraum:\s*([\d.]+\s*-\s*[\d.]+)/))
     .find(Boolean);
+  const kundennummerMatch = lines
+    .map((l) => l.match(/Kundennummer\s+(\d+)/))
+    .find(Boolean);
 
   const abrechnungszeitraum = abrechnungszeitraumMatch
     ? abrechnungszeitraumMatch[1].replace(/\s+/g, " ").trim()
@@ -137,6 +140,7 @@ export function parseA1(pages: PdfLine[][]): ParsedInvoice {
     rechnungsdatum: rechnungsdatumMatch
       ? parseGermanDate(rechnungsdatumMatch[1])
       : null,
+    kundennummer: kundennummerMatch ? kundennummerMatch[1] : null,
     positionen: Array.from(positionen.values()),
   };
 }

@@ -14,6 +14,8 @@ export interface ParsedInvoice {
   anbieter: "A1" | "Magenta" | "Drei";
   rechnungsnummer: string | null;
   rechnungsdatum: string | null;
+  /** Kundennummer/BAN vom Rechnungskopf, gilt für alle Positionen dieser Rechnung. */
+  kundennummer: string | null;
   positionen: ParsedPosition[];
 }
 
