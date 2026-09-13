@@ -1,29 +1,48 @@
-import { createClient } from "@/lib/supabase/server";
+import Link from "next/link";
+import { AppShell } from "@/components/AppShell";
 
-export default async function Home() {
-  const supabase = await createClient();
+const CARDS = [
+  {
+    href: "/rufnummern",
+    title: "Rufnummern",
+    description: "Namen, BAN und erwarteten Betrag pro Rufnummer verwalten.",
+  },
+  {
+    href: "/rechnungen",
+    title: "Rechnungen",
+    description: "PDF-Rechnungen von A1, Magenta und Drei hochladen.",
+  },
+  {
+    href: "/berichte",
+    title: "Berichte",
+    description: "Monatliche Kostenaufstellung als PDF und Excel herunterladen.",
+  },
+  {
+    href: "/warnliste",
+    title: "Warnliste",
+    description: "Rufnummern mit Abweichung vom erwarteten Betrag (> 30 €).",
+  },
+];
 
-  // Any structured response from the Supabase REST endpoint (including a
-  // "table not found" error) proves connectivity; only a thrown network
-  // error means the connection itself failed.
-  let connected = true;
-  try {
-    await supabase.from("_realtime_check_").select("*").limit(1);
-  } catch {
-    connected = false;
-  }
-
+export default function DashboardPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-zinc-50 font-sans dark:bg-black">
-      <h1 className="text-3xl font-semibold text-black dark:text-zinc-50">
-        MobiconDashboard
-      </h1>
-      <p className="text-zinc-600 dark:text-zinc-400">
-        Supabase:{" "}
-        <span className={connected ? "text-green-600" : "text-red-600"}>
-          {connected ? "verbunden" : "nicht verbunden"}
-        </span>
+    <AppShell>
+      <h1 className="text-2xl font-semibold text-mobicon-dark">Übersicht</h1>
+      <p className="mt-1 text-zinc-600">
+        Verrechnungsübersicht für A1, Magenta und Drei.
       </p>
-    </div>
+      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {CARDS.map((card) => (
+          <Link
+            key={card.href}
+            href={card.href}
+            className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-colors hover:border-mobicon-green"
+          >
+            <h2 className="font-semibold text-mobicon-dark">{card.title}</h2>
+            <p className="mt-1 text-sm text-zinc-600">{card.description}</p>
+          </Link>
+        ))}
+      </div>
+    </AppShell>
   );
 }

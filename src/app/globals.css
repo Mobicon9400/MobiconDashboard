@@ -3,11 +3,17 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --mobicon-dark: #2d3e4f;
+  --mobicon-green: #8bc53f;
+  --mobicon-green-dark: #6ea82f;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-mobicon-dark: var(--mobicon-dark);
+  --color-mobicon-green: var(--mobicon-green);
+  --color-mobicon-green-dark: var(--mobicon-green-dark);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
