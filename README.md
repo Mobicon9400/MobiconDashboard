@@ -6,6 +6,8 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 Work happens on feature branches; `main` reflects the current released state. Merge to `main` only once a change has been reviewed and approved.
 
+`main` is the Vercel production branch — pushes here deploy to production.
+
 ## Getting Started
 
 First, run the development server:
