@@ -12,6 +12,7 @@ export function istPlausibleRufnummer(digits: string): boolean {
 
 export const ANBIETER_NACH_SHEET: Record<string, "A1" | "Drei" | "Magenta"> = {
   "Bus und Comp": "A1",
+  Network: "A1",
   H3G: "Drei",
   Magenta: "Magenta",
 };
