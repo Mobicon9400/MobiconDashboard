@@ -117,5 +117,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // Die Namensliste ist die Quelle der Wahrheit: schon hochgeladene
+  // Rechnungen tragen ihren Namen sonst dauerhaft mit dem Stand von vor
+  // diesem Import fest.
+  await supabase.rpc("sync_rechnungspositionen_namen", {
+    eintraege: rows.map((r) => ({
+      rufnummer_normalisiert: r.rufnummer_normalisiert,
+      name: r.name,
+    })),
+  });
+
   return NextResponse.json({ importiert: rows.length, verarbeiteteSheets });
 }
