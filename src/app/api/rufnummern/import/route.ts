@@ -76,6 +76,8 @@ export async function POST(request: Request) {
 
     for (let rowNumber = headerRow + 1; rowNumber <= sheet.rowCount; rowNumber++) {
       const row = sheet.getRow(rowNumber);
+      if (row.hidden) continue;
+
       const rufnummerRoh = zelleAlsText(row.getCell(rufCol).value);
       if (!rufnummerRoh) continue;
 
