@@ -136,7 +136,7 @@ export function parseDrei(pages: PdfLine[][]): ParsedInvoice {
     anbieter: "Drei",
     rechnungsnummer,
     rechnungsdatum,
-    kundennummer,
+    ban: kundennummer,
     positionen: Array.from(positionen.values()),
   };
 }

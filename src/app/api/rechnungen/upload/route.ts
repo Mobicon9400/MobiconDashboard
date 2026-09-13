@@ -134,7 +134,7 @@ export async function POST(request: Request) {
       rufnummer_normalisiert: pos.rufnummer_normalisiert,
       rufnummer_anzeige: pos.rufnummer_anzeige,
       name: mapping?.name ?? null,
-      ban: mapping?.ban ?? invoice.kundennummer ?? null,
+      ban: mapping?.ban ?? invoice.ban ?? null,
       verbindungsentgelte_20: round2(pos.verbindungsentgelte_20),
       drittanbieter_20: round2(pos.drittanbieter_20),
       drittanbieter_0: round2(pos.drittanbieter_0),

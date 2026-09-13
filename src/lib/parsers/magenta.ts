@@ -140,7 +140,7 @@ export function parseMagenta(pages: PdfLine[][]): ParsedInvoice {
     rechnungsdatum: rechnungsdatumMatch
       ? parseGermanDate(rechnungsdatumMatch[1])
       : null,
-    kundennummer: kundennummerMatch ? kundennummerMatch[1] : null,
+    ban: kundennummerMatch ? kundennummerMatch[1] : null,
     positionen: Array.from(positionen.values()),
   };
 }
