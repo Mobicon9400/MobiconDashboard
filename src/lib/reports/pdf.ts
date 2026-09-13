@@ -9,18 +9,33 @@ function euro(value: number): string {
 }
 
 const SPALTENBREITEN = [90, 60, 50, 55, 55, 55, 55, 55, 45, 55, 90, 128];
-const ROWS_PRO_SEITE = 20;
+const ZELLEN_PADDING = 4;
+const HEADER_FONT_SIZE = 7.5;
+const ZEILEN_FONT_SIZE = 7;
 
-function headerRow() {
-  return REPORT_SPALTEN.map((label) => ({
-    text: label,
-    type: "TH" as const,
-    backgroundColor: "#2d3e4f",
-    textColor: "white",
-    font: { size: 7.5 },
-  }));
+function zeilenWerte(row: ReportRow): string[] {
+  return [
+    row.name,
+    row.rufnummer,
+    row.ban,
+    euro(row.verbindungsentgelte_20),
+    euro(row.drittanbieter_20),
+    euro(row.drittanbieter_0),
+    euro(row.online_dienste_20),
+    euro(row.online_dienste_0),
+    euro(row.steuer),
+    euro(row.gesamtsumme),
+    row.abrechnungszeitraum,
+    row.bemerkungen,
+  ];
 }
 
+/**
+ * Zeichnet Tabellenzeilen zell- statt seitenweise, mit vorab per
+ * heightOfString gemessener Zeilenhöhe. pdfkits eigenes doc.table() bricht
+ * Zeilen sonst intern und ohne Rücksprache um, sodass einzelne Zeilen
+ * unangekündigt auf eine neue (dann fast leere) Seite rutschen.
+ */
 export async function buildPdfBericht(monat: string, rows: ReportRow[]): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", layout: "landscape", margin: 24 });
@@ -29,59 +44,91 @@ export async function buildPdfBericht(monat: string, rows: ReportRow[]): Promise
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
-    const seiten =
-      rows.length === 0
-        ? [[]]
-        : Array.from({ length: Math.ceil(rows.length / ROWS_PRO_SEITE) }, (_, i) =>
-            rows.slice(i * ROWS_PRO_SEITE, (i + 1) * ROWS_PRO_SEITE),
-          );
+    const margin = doc.page.margins.left;
+    const tabellenBreite = SPALTENBREITEN.reduce((a, b) => a + b, 0);
+    const spaltenX: number[] = [];
+    {
+      let x = margin;
+      for (const breite of SPALTENBREITEN) {
+        spaltenX.push(x);
+        x += breite;
+      }
+    }
+    const seitenUnterkante = () => doc.page.height - doc.page.margins.bottom;
 
-    seiten.forEach((seite, index) => {
-      if (index > 0) doc.addPage({ size: "A4", layout: "landscape", margin: 24 });
+    function zellenHoehe(werte: string[], fontSize: number): number {
+      doc.fontSize(fontSize);
+      let max = 0;
+      werte.forEach((text, i) => {
+        const h = doc.heightOfString(text || " ", {
+          width: SPALTENBREITEN[i] - ZELLEN_PADDING * 2,
+        });
+        if (h > max) max = h;
+      });
+      return max + ZELLEN_PADDING * 2;
+    }
 
+    function zeichneTitel() {
       doc
         .fontSize(16)
         .fillColor("#2d3e4f")
-        .text(`Mobicon Verrechnung – ${monat}`, { align: "left" });
+        .text(`Mobicon Verrechnung – ${monat}`, margin, margin, { width: tabellenBreite });
       doc.moveDown(0.6);
-      doc.fontSize(7);
+    }
 
-      const table = doc.table({
-        columnStyles: SPALTENBREITEN,
-        defaultStyle: {
-          padding: 4,
-          border: [0, 0, 0.5, 0.5],
-          borderColor: "#d4d4d8",
-        },
+    function zeichneHeader() {
+      const werte = [...REPORT_SPALTEN];
+      const hoehe = zellenHoehe(werte, HEADER_FONT_SIZE);
+      const y = doc.y;
+      doc.rect(margin, y, tabellenBreite, hoehe).fill("#2d3e4f");
+      doc.fillColor("white").fontSize(HEADER_FONT_SIZE);
+      werte.forEach((text, i) => {
+        doc.text(text, spaltenX[i] + ZELLEN_PADDING, y + ZELLEN_PADDING, {
+          width: SPALTENBREITEN[i] - ZELLEN_PADDING * 2,
+        });
       });
+      doc.y = y + hoehe;
+      doc.fillColor("black");
+    }
 
-      table.row(headerRow());
-
-      for (const row of seite) {
-        const werte = [
-          row.name,
-          row.rufnummer,
-          row.ban,
-          euro(row.verbindungsentgelte_20),
-          euro(row.drittanbieter_20),
-          euro(row.drittanbieter_0),
-          euro(row.online_dienste_20),
-          euro(row.online_dienste_0),
-          euro(row.steuer),
-          euro(row.gesamtsumme),
-          row.abrechnungszeitraum,
-          row.bemerkungen,
-        ];
-
-        table.row(
-          werte.map((text) =>
-            row.istSummenzeile ? { text, backgroundColor: "#f0f4e8" } : { text },
-          ),
-        );
+    function zeichneZeile(werte: string[], hintergrund?: string) {
+      const hoehe = zellenHoehe(werte, ZEILEN_FONT_SIZE);
+      const y = doc.y;
+      if (hintergrund) {
+        doc.rect(margin, y, tabellenBreite, hoehe).fill(hintergrund);
       }
+      doc.fillColor("black").fontSize(ZEILEN_FONT_SIZE);
+      werte.forEach((text, i) => {
+        doc.text(text || "", spaltenX[i] + ZELLEN_PADDING, y + ZELLEN_PADDING, {
+          width: SPALTENBREITEN[i] - ZELLEN_PADDING * 2,
+        });
+      });
+      doc
+        .moveTo(margin, y + hoehe)
+        .lineTo(margin + tabellenBreite, y + hoehe)
+        .lineWidth(0.5)
+        .strokeColor("#d4d4d8")
+        .stroke();
+      doc.y = y + hoehe;
+    }
 
-      table.end();
-    });
+    function neueSeite() {
+      doc.addPage({ size: "A4", layout: "landscape", margin });
+      zeichneTitel();
+      zeichneHeader();
+    }
+
+    zeichneTitel();
+    zeichneHeader();
+
+    for (const row of rows) {
+      const werte = zeilenWerte(row);
+      const hoehe = zellenHoehe(werte, ZEILEN_FONT_SIZE);
+      if (doc.y + hoehe > seitenUnterkante()) {
+        neueSeite();
+      }
+      zeichneZeile(werte, row.istSummenzeile ? "#f0f4e8" : undefined);
+    }
 
     doc.end();
   });

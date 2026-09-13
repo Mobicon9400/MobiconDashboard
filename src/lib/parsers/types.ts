@@ -8,6 +8,12 @@ export interface ParsedPosition {
   online_dienste_0: number;
   abrechnungszeitraum: string;
   bemerkungen: string;
+  /**
+   * Name, wie er direkt auf der Rechnung neben der Rufnummer steht (bisher
+   * nur bei Drei/H3G vorhanden). Dient als Fallback, wenn die
+   * Rufnummern-Zuordnungstabelle noch keinen Namen für die Nummer kennt.
+   */
+  nameAusRechnung: string | null;
 }
 
 export interface ParsedInvoice {
@@ -50,6 +56,7 @@ export function makePosition(
     online_dienste_0: 0,
     abrechnungszeitraum: "",
     bemerkungen: "",
+    nameAusRechnung: null,
   };
 }
 

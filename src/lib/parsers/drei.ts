@@ -16,6 +16,9 @@ const TRAILING_NETTO_TAX_BRUTTO =
   /(-?\d[\d.]*,\d{2})\s*(?:(\d{1,2})\s?%\s*)?(-?\d[\d.]*,\d{2})\s*$/;
 const RECHNUNG_HEADER_VALUES =
   /^(\d{7,12})\s+(\d+)\s+(\d{1,2}\.\s*[A-ZÄÖÜ][a-zäöü]{2,4}\.?\s*\d{4})$/;
+// Direkt unter "Übersicht für <Rufnummer>" steht bei Drei/H3G immer eine
+// Zeile wie "Handy,Riegler Waltraud" – Tarif-/Kategoriewort, Komma, Name.
+const NAME_ZEILE = /^[A-Za-zÄÖÜäöüß]+,\s*(.+)$/;
 
 type Section = "main" | "nichtInkludiert" | null;
 
@@ -49,7 +52,8 @@ export function parseDrei(pages: PdfLine[][]): ParsedInvoice {
   let section: Section = null;
   let zeitraumCaptured = false;
 
-  for (const line of lines) {
+  for (let idx = 0; idx < lines.length; idx++) {
+    const line = lines[idx];
     const uebersichtMatch = line.match(UEBERSICHT_HEADER);
     if (uebersichtMatch) {
       const normalisiert = normalisiereRufnummer(uebersichtMatch[3]);
@@ -60,6 +64,11 @@ export function parseDrei(pages: PdfLine[][]): ParsedInvoice {
         positionen.set(normalisiert, currentPosition);
         section = "main";
         zeitraumCaptured = Boolean(currentPosition.abrechnungszeitraum);
+
+        if (!currentPosition.nameAusRechnung) {
+          const nameMatch = lines[idx + 1]?.match(NAME_ZEILE);
+          if (nameMatch) currentPosition.nameAusRechnung = nameMatch[1].trim();
+        }
       } else {
         currentPosition = null;
         section = null;
