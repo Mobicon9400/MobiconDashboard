@@ -25,23 +25,36 @@ export function RechnungenUpload() {
     }
 
     startUpload(async () => {
-      for (const file of Array.from(files)) {
-        setStatus(`Verarbeite ${file.name}…`);
-        const formData = new FormData();
-        formData.append("datei", file);
-        const res = await fetch("/api/rechnungen/upload", {
-          method: "POST",
-          body: formData,
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          setStatus(`Fehler bei ${file.name}: ${data.error}`);
-          return;
+      const alle = Array.from(files);
+      const fehler: string[] = [];
+      let erfolgreich = 0;
+
+      for (let i = 0; i < alle.length; i++) {
+        const file = alle[i];
+        setStatus(`Verarbeite ${i + 1}/${alle.length}: ${file.name}…`);
+        try {
+          const formData = new FormData();
+          formData.append("datei", file);
+          const res = await fetch("/api/rechnungen/upload", {
+            method: "POST",
+            body: formData,
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            fehler.push(`${file.name}: ${data.error}`);
+            continue;
+          }
+          erfolgreich++;
+        } catch {
+          fehler.push(`${file.name}: Verbindung fehlgeschlagen.`);
         }
-        setStatus(
-          `${file.name}: ${data.anbieter} erkannt, ${data.anzahlPositionen} Rufnummern für ${data.monat} verarbeitet.`,
-        );
       }
+
+      setStatus(
+        fehler.length === 0
+          ? `${erfolgreich} von ${alle.length} Rechnung(en) erfolgreich verarbeitet.`
+          : `${erfolgreich} von ${alle.length} erfolgreich. Fehler bei: ${fehler.join("; ")}`,
+      );
       if (fileInputRef.current) fileInputRef.current.value = "";
       setSelectedFileNames([]);
       router.refresh();
