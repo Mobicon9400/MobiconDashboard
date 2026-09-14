@@ -7,6 +7,10 @@ import {
   normalisiereRufnummer,
 } from "@/lib/rufnummern";
 
+// Das Excel kann mehrere Tabellenblätter mit tausenden Zeilen haben -
+// Parsing + Bulk-Upsert kann das Standardlimit (10s) überschreiten.
+export const maxDuration = 60;
+
 function zelleAlsText(value: ExcelJS.CellValue): string | null {
   if (value === null || value === undefined) return null;
   if (typeof value === "object" && "text" in value) {

@@ -7,6 +7,10 @@ import { buildPdfBericht } from "@/lib/reports/pdf";
 
 const MONAT_REGEX = /^\d{4}-\d{2}$/;
 
+// Große Monate (viele Rufnummern) + PDF/Excel-Erzeugung + zwei Storage-Uploads
+// können das Standardlimit (10s) überschreiten.
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const monat = body?.monat;

@@ -3,6 +3,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { parseRechnungPdf } from "@/lib/parsers";
 import { round2 } from "@/lib/parsers/types";
 
+// PDF-Parsing + Storage-Upload einer großen Rechnung kann das Standardlimit
+// (10s) leicht überschreiten und dann als Gateway-Timeout beim Client
+// ankommen, bevor die Funktion überhaupt fertig ist.
+export const maxDuration = 60;
+
 function berechneMonat(rechnungsdatum: string | null): string {
   if (rechnungsdatum) return rechnungsdatum.slice(0, 7);
   return new Date().toISOString().slice(0, 7);
