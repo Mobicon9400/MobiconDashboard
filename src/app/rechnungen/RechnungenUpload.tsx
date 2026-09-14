@@ -16,6 +16,31 @@ export function RechnungenUpload() {
   const [isUploading, startUpload] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  async function uploadEineDatei(
+    file: File,
+    versuch: number,
+  ): Promise<{ ok: true } | { ok: false; fehler: string }> {
+    try {
+      const formData = new FormData();
+      formData.append("datei", file);
+      const res = await fetch("/api/rechnungen/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) return { ok: false, fehler: data.error };
+      return { ok: true };
+    } catch {
+      // Kurzer Netzwerk-Aussetzer (WLAN beim Kunden) reicht sonst schon,
+      // um eine Datei aus einem großen Batch als "fehlgeschlagen" zu melden.
+      if (versuch < 2) {
+        await new Promise((r) => setTimeout(r, 1500));
+        return uploadEineDatei(file, versuch + 1);
+      }
+      return { ok: false, fehler: "Verbindung fehlgeschlagen (auch nach Wiederholung)." };
+    }
+  }
+
   async function handleUpload(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const files = fileInputRef.current?.files;
@@ -32,21 +57,11 @@ export function RechnungenUpload() {
       for (let i = 0; i < alle.length; i++) {
         const file = alle[i];
         setStatus(`Verarbeite ${i + 1}/${alle.length}: ${file.name}…`);
-        try {
-          const formData = new FormData();
-          formData.append("datei", file);
-          const res = await fetch("/api/rechnungen/upload", {
-            method: "POST",
-            body: formData,
-          });
-          const data = await res.json();
-          if (!res.ok) {
-            fehler.push(`${file.name}: ${data.error}`);
-            continue;
-          }
+        const ergebnis = await uploadEineDatei(file, 0);
+        if (ergebnis.ok) {
           erfolgreich++;
-        } catch {
-          fehler.push(`${file.name}: Verbindung fehlgeschlagen.`);
+        } else {
+          fehler.push(`${file.name}: ${ergebnis.fehler}`);
         }
       }
 
