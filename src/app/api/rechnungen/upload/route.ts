@@ -3,11 +3,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { parseRechnungPdf } from "@/lib/parsers";
 import { round2 } from "@/lib/parsers/types";
 
-// PDF-Parsing + Storage-Upload einer großen Rechnung, kombiniert mit einer
-// langsameren Kundenverbindung beim eigentlichen Datei-Upload, lag bei
-// echten Uploads konstant bei 48-57s - zu nah an einem 60s-Limit. Auf das
-// Maximum angehoben, damit auch größere Rechnungen/langsamere Leitungen
-// nicht knapp über die Kante fallen.
+// PDF-Parsing kann bei großen Rechnungen etwas dauern; die eigentliche
+// Datei-Übertragung läuft inzwischen direkt Browser -> Supabase Storage und
+// zählt hier nicht mehr mit.
 export const maxDuration = 300;
 
 function berechneMonat(rechnungsdatum: string | null): string {
@@ -16,24 +14,41 @@ function berechneMonat(rechnungsdatum: string | null): string {
 }
 
 export async function POST(request: Request) {
-  const formData = await request.formData();
-  const file = formData.get("datei");
+  const body = await request.json().catch(() => null);
+  const tempPfad = body?.storagePath;
+  const dateiname = body?.dateiname;
 
-  if (!(file instanceof File)) {
-    return NextResponse.json({ error: "Keine Datei erhalten." }, { status: 400 });
+  if (typeof tempPfad !== "string" || typeof dateiname !== "string") {
+    return NextResponse.json(
+      { error: "Kein hochgeladener Datei-Pfad übergeben." },
+      { status: 400 },
+    );
+  }
+
+  const supabase = createAdminClient();
+
+  const { data: fileBlob, error: downloadError } = await supabase.storage
+    .from("rechnungen")
+    .download(tempPfad);
+
+  if (downloadError || !fileBlob) {
+    return NextResponse.json(
+      { error: downloadError?.message ?? "Hochgeladene Datei konnte nicht gelesen werden." },
+      { status: 500 },
+    );
   }
 
   let invoice;
   try {
-    invoice = await parseRechnungPdf(await file.arrayBuffer());
+    invoice = await parseRechnungPdf(await fileBlob.arrayBuffer());
   } catch (error) {
+    await supabase.storage.from("rechnungen").remove([tempPfad]);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "PDF konnte nicht gelesen werden." },
       { status: 422 },
     );
   }
 
-  const supabase = createAdminClient();
   const monat = berechneMonat(invoice.rechnungsdatum);
 
   const { data: rufnummernMappings } = await supabase
@@ -66,7 +81,7 @@ export async function POST(request: Request) {
         .update({
           monat,
           rechnungsdatum: invoice.rechnungsdatum,
-          dateiname: file.name,
+          dateiname,
           status: "hochgeladen",
           fehlermeldung: null,
         })
@@ -79,7 +94,7 @@ export async function POST(request: Request) {
           rechnungsnummer: invoice.rechnungsnummer,
           rechnungsdatum: invoice.rechnungsdatum,
           monat,
-          dateiname: file.name,
+          dateiname,
         })
         .select("id")
         .single();
@@ -99,7 +114,7 @@ export async function POST(request: Request) {
         rechnungsnummer: null,
         rechnungsdatum: invoice.rechnungsdatum,
         monat,
-        dateiname: file.name,
+        dateiname,
       })
       .select("id")
       .single();
@@ -113,12 +128,7 @@ export async function POST(request: Request) {
   }
 
   const storagePfad = `${invoice.anbieter}/${monat}/${rechnungId}.pdf`;
-  await supabase.storage
-    .from("rechnungen")
-    .upload(storagePfad, await file.arrayBuffer(), {
-      contentType: "application/pdf",
-      upsert: true,
-    });
+  await supabase.storage.from("rechnungen").move(tempPfad, storagePfad);
   await supabase.from("rechnungen").update({ storage_pfad: storagePfad }).eq("id", rechnungId);
 
   const positionsRows = invoice.positionen.map((pos) => {

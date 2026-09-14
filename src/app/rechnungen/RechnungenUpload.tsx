@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 const ANBIETER_FARBEN: Record<string, string> = {
   A1: "bg-red-50 text-red-700",
@@ -21,11 +22,27 @@ export function RechnungenUpload() {
     versuch: number,
   ): Promise<{ ok: true } | { ok: false; fehler: string }> {
     try {
-      const formData = new FormData();
-      formData.append("datei", file);
+      // Große Rechnungen (>4-5MB) überschreiten sonst das Limit für
+      // Vercel-Funktions-Requests. Die Datei geht deshalb direkt vom Browser
+      // zu Supabase Storage; unsere Funktion bekommt nur noch den Pfad.
+      const urlRes = await fetch("/api/rechnungen/upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dateiname: file.name }),
+      });
+      const urlData = await urlRes.json();
+      if (!urlRes.ok) return { ok: false, fehler: urlData.error };
+
+      const supabase = createClient();
+      const { error: uploadError } = await supabase.storage
+        .from("rechnungen")
+        .uploadToSignedUrl(urlData.path, urlData.token, file);
+      if (uploadError) return { ok: false, fehler: uploadError.message };
+
       const res = await fetch("/api/rechnungen/upload", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ storagePath: urlData.path, dateiname: file.name }),
       });
       const data = await res.json();
       if (!res.ok) return { ok: false, fehler: data.error };
