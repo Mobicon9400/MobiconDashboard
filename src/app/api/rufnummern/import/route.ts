@@ -9,7 +9,7 @@ import {
 
 // Das Excel kann mehrere Tabellenblätter mit tausenden Zeilen haben -
 // Parsing + Bulk-Upsert kann das Standardlimit (10s) überschreiten.
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 function zelleAlsText(value: ExcelJS.CellValue): string | null {
   if (value === null || value === undefined) return null;

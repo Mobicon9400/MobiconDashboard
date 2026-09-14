@@ -9,7 +9,7 @@ const MONAT_REGEX = /^\d{4}-\d{2}$/;
 
 // Große Monate (viele Rufnummern) + PDF/Excel-Erzeugung + zwei Storage-Uploads
 // können das Standardlimit (10s) überschreiten.
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
