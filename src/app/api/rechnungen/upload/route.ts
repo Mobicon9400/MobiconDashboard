@@ -42,7 +42,9 @@ export async function POST(request: Request) {
   try {
     invoice = await parseRechnungPdf(await fileBlob.arrayBuffer());
   } catch (error) {
-    await supabase.storage.from("rechnungen").remove([tempPfad]);
+    // Datei bewusst NICHT löschen: bei "Anbieter nicht erkannt" ist die
+    // Datei unter pending/ der einzige Weg, den tatsächlichen Rechnungskopf
+    // im Nachhinein zu prüfen (die Fehlermeldung zeigt nur einen Ausschnitt).
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "PDF konnte nicht gelesen werden." },
       { status: 422 },
