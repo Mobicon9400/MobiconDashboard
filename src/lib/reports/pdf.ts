@@ -8,7 +8,7 @@ function euro(value: number): string {
   }).format(value);
 }
 
-const SPALTENBREITEN = [80, 55, 45, 50, 50, 50, 50, 50, 40, 50, 65, 65, 50, 90];
+const SPALTENBREITEN = [80, 55, 65, 50, 50, 50, 50, 50, 40, 50, 65, 65, 50, 70];
 const ZELLEN_PADDING = 4;
 const HEADER_FONT_SIZE = 7.5;
 const ZEILEN_FONT_SIZE = 7;
