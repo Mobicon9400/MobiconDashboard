@@ -128,8 +128,16 @@ export async function POST(request: Request) {
   }
 
   const storagePfad = `${invoice.anbieter}/${monat}/${rechnungId}.pdf`;
-  await supabase.storage.from("rechnungen").move(tempPfad, storagePfad);
-  await supabase.from("rechnungen").update({ storage_pfad: storagePfad }).eq("id", rechnungId);
+  const { error: moveError } = await supabase.storage
+    .from("rechnungen")
+    .move(tempPfad, storagePfad);
+  // Wenn der Umzug fehlschlägt, bleibt die Datei unter ihrem temporären Pfad
+  // abrufbar - lieber das als eine storage_pfad-Referenz auf eine Datei, die
+  // dort gar nicht liegt.
+  await supabase
+    .from("rechnungen")
+    .update({ storage_pfad: moveError ? tempPfad : storagePfad })
+    .eq("id", rechnungId);
 
   const positionsRows = invoice.positionen.map((pos) => {
     const mapping = mappingByRufnummer.get(pos.rufnummer_normalisiert);

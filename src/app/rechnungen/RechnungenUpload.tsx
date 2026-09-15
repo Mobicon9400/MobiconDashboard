@@ -2,13 +2,49 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import * as tus from "tus-js-client";
 
 const ANBIETER_FARBEN: Record<string, string> = {
   A1: "bg-red-50 text-red-700",
   Magenta: "bg-pink-50 text-pink-700",
   Drei: "bg-orange-50 text-orange-700",
 };
+
+const PROJECT_REF = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).hostname.split(".")[0];
+
+// Standard-Uploads (fetch/PUT auf die signierte URL) gelten laut Supabase
+// selbst offiziell erst ab 6MB als "weniger zuverlässig" - bei größeren
+// Rechnungen über eine instabile Kundenverbindung reißt der Upload sonst
+// ohne Wiederaufnahme komplett ab. TUS lädt in 6MB-Blöcken hoch und kann
+// nach einem Abbruch dort weitermachen, wo er aufgehört hat.
+function uploadViaTus(file: File, path: string, token: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const upload = new tus.Upload(file, {
+      endpoint: `https://${PROJECT_REF}.storage.supabase.co/storage/v1/upload/resumable`,
+      retryDelays: [0, 1000, 3000, 5000, 10000],
+      headers: {
+        apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        "x-signature": token,
+        "x-upsert": "false",
+      },
+      uploadDataDuringCreation: true,
+      removeFingerprintOnSuccess: true,
+      metadata: {
+        bucketName: "rechnungen",
+        objectName: path,
+        contentType: "application/pdf",
+        cacheControl: "3600",
+      },
+      chunkSize: 6 * 1024 * 1024,
+      onError: reject,
+      onSuccess: () => resolve(),
+    });
+    upload.findPreviousUploads().then((vorherige) => {
+      if (vorherige.length > 0) upload.resumeFromPreviousUpload(vorherige[0]);
+      upload.start();
+    });
+  });
+}
 
 export function RechnungenUpload() {
   const router = useRouter();
@@ -33,11 +69,7 @@ export function RechnungenUpload() {
       const urlData = await urlRes.json();
       if (!urlRes.ok) return { ok: false, fehler: urlData.error };
 
-      const supabase = createClient();
-      const { error: uploadError } = await supabase.storage
-        .from("rechnungen")
-        .uploadToSignedUrl(urlData.path, urlData.token, file);
-      if (uploadError) return { ok: false, fehler: uploadError.message };
+      await uploadViaTus(file, urlData.path, urlData.token);
 
       const res = await fetch("/api/rechnungen/upload", {
         method: "POST",
