@@ -11,6 +11,8 @@ export interface MonatsRow {
   steuer: number;
   gesamtsumme: number;
   abrechnungszeitraum: string | null;
+  rechnungsnummer: string | null;
+  netzbetreiber: string | null;
   bemerkungen: string | null;
 }
 
@@ -26,6 +28,8 @@ export interface ReportRow {
   steuer: number;
   gesamtsumme: number;
   abrechnungszeitraum: string;
+  rechnungsnummer: string;
+  netzbetreiber: string;
   bemerkungen: string;
   istSummenzeile: boolean;
 }
@@ -42,5 +46,7 @@ export const REPORT_SPALTEN = [
   "Steuer",
   "Gesamtsumme inkl. Steuer",
   "Abrechnungszeitraum",
+  "Rechnungsnummer",
+  "Netzbetreiber",
   "Bemerkungen",
 ] as const;

@@ -13,7 +13,9 @@ export function detectAnbieter(allLines: string[]): Anbieter | null {
   if (/T-Mobile Austria GmbH/.test(text) || /Ihre Magenta Rechnung/.test(text)) {
     return "Magenta";
   }
-  if (/Hutchison Drei Austria/.test(text)) return "Drei";
+  // Drei hieß rechtsförmlich vor der Fusion mit Orange (~2013) "Hutchison
+  // 3G Austria GmbH"; ältere Rechnungen tragen noch diesen Namen.
+  if (/Hutchison (Drei|3G) Austria/.test(text)) return "Drei";
   return null;
 }
 

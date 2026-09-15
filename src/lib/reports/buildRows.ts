@@ -17,6 +17,8 @@ function toReportRow(row: MonatsRow): ReportRow {
     steuer: row.steuer,
     gesamtsumme: row.gesamtsumme,
     abrechnungszeitraum: row.abrechnungszeitraum ?? "",
+    rechnungsnummer: row.rechnungsnummer ?? "",
+    netzbetreiber: row.netzbetreiber ?? "",
     bemerkungen: row.bemerkungen ?? "",
     istSummenzeile: false,
   };
@@ -61,6 +63,8 @@ export function buildReportRows(monatsRows: MonatsRow[]): ReportRow[] {
         steuer: round2(sum(gruppe, "steuer")),
         gesamtsumme: round2(sum(gruppe, "gesamtsumme")),
         abrechnungszeitraum: "",
+        rechnungsnummer: "",
+        netzbetreiber: "",
         bemerkungen: "",
         istSummenzeile: true,
       });

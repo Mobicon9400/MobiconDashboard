@@ -19,7 +19,9 @@ export async function buildExcelBericht(monat: string, rows: ReportRow[]): Promi
     { header: REPORT_SPALTEN[8], key: "steuer", width: 12 },
     { header: REPORT_SPALTEN[9], key: "gesamtsumme", width: 16 },
     { header: REPORT_SPALTEN[10], key: "abrechnungszeitraum", width: 26 },
-    { header: REPORT_SPALTEN[11], key: "bemerkungen", width: 40 },
+    { header: REPORT_SPALTEN[11], key: "rechnungsnummer", width: 18 },
+    { header: REPORT_SPALTEN[12], key: "netzbetreiber", width: 14 },
+    { header: REPORT_SPALTEN[13], key: "bemerkungen", width: 40 },
   ];
 
   sheet.getRow(1).font = { bold: true };
@@ -55,7 +57,7 @@ export async function buildExcelBericht(monat: string, rows: ReportRow[]): Promi
     }
   }
 
-  sheet.autoFilter = { from: "A1", to: "L1" };
+  sheet.autoFilter = { from: "A1", to: "N1" };
 
   const arrayBuffer = await workbook.xlsx.writeBuffer();
   return Buffer.from(arrayBuffer);

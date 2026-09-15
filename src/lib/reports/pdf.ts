@@ -8,7 +8,7 @@ function euro(value: number): string {
   }).format(value);
 }
 
-const SPALTENBREITEN = [90, 60, 50, 55, 55, 55, 55, 55, 45, 55, 90, 128];
+const SPALTENBREITEN = [80, 55, 45, 50, 50, 50, 50, 50, 40, 50, 65, 65, 50, 90];
 const ZELLEN_PADDING = 4;
 const HEADER_FONT_SIZE = 7.5;
 const ZEILEN_FONT_SIZE = 7;
@@ -26,6 +26,8 @@ function zeilenWerte(row: ReportRow): string[] {
     euro(row.steuer),
     euro(row.gesamtsumme),
     row.abrechnungszeitraum,
+    row.rechnungsnummer,
+    row.netzbetreiber,
     row.bemerkungen,
   ];
 }
